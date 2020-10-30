@@ -47,7 +47,7 @@ app.get('/api/candidate/:id', (req, res) => {
                 ON candidates.party_id = parties.id
                 WHERE candidates.id = ?`;
     const params = [req.params.id];
-    db.get(sql, params, (err, row) => {
+    db.get(sql, params, (err, rows) => {
         if (err) {
             res.status(400).json({ error: err.message });
             return;
@@ -55,8 +55,86 @@ app.get('/api/candidate/:id', (req, res) => {
 
         res.json({
             message: 'succes',
+            data: rows
+        });
+    });
+});
+
+// GET Parties table
+app.get('/api/parties', (req,res) => {
+    const sql = `SELECT * FROM parties`;
+    const params = [];
+    db.all(sql, params,(err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+
+        res.json({
+            message: 'succes',
+            data: rows
+        });
+    });
+});
+
+// GET party by id
+app.get('/api/parties/:id', (req, res) => {
+    const sql = `SELECT * FROM parties
+                WHERE id = ?`;
+    const params = [req.params.id];
+    db.get(sql, params, (err, row) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+
+        res.json({
+            message: 'success',
             data: row
         });
+    });
+});
+
+// DELETE a party
+app.delete('/api/parties/:id', (req, res) => {
+    const sql = `DELETE FROM parties WHERE id = ?`;
+    const params = [req.params.id];
+    db.run(sql, params, function(err, result) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+
+        res.json({
+            message: 'successfully deketed',
+            changes: this.changes
+        });
+    });
+});
+
+// Change a candidates party
+app.put('/api/candidate/:id', (req, res) => {
+    const errors = inputCheck(req.body, 'party_id');
+
+    if (errors) {
+        res.status(400).json({ error: errors });
+        return;
+    }
+    const sql = `UPDATE candidates SET party_id = ? 
+                 WHERE id = ?`;
+    const params = [req.body.party_id, req.params.id];
+  
+    db.run(sql, params, function(err, result) {
+      if (err) {
+        res.status(400).json({ error: err.message });
+        return;
+      }
+  
+      res.json({
+        message: 'success',
+        data: req.body,
+        changes: this.changes
+      });
     });
 });
 
